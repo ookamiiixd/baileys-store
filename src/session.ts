@@ -44,7 +44,7 @@ export async function useSession(sessionId: string) {
         where: { sessionId_id: { id: fixId(id), sessionId } },
       });
     } catch (e) {
-      logger.error(e, 'An error occured during session write');
+      logger.error(e, 'An error occured during session delete');
     }
   };
 
