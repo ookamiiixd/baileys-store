@@ -1,21 +1,18 @@
 import type { BaileysEventEmitter, SocketConfig } from '@adiwajshing/baileys';
 import type { PrismaClient } from '@prisma/client';
-import { setEventEmitter, setLogger, setPrisma } from './shared';
+import { setLogger, setPrisma } from './shared';
 import * as handlers from './handlers';
 
 type initStoreOptions = {
   /** Prisma client instance */
   prisma: PrismaClient;
-  /** Baileys event emitter */
-  eventEmitter: BaileysEventEmitter;
   /** Baileys pino logger */
   logger?: SocketConfig['logger'];
 };
 
 /** Initialize shared instances that will be consumed by the Store instance */
-export function initStore({ prisma, eventEmitter, logger }: initStoreOptions) {
+export function initStore({ prisma, logger }: initStoreOptions) {
   setPrisma(prisma);
-  setEventEmitter(eventEmitter);
   setLogger(logger);
 }
 
@@ -25,11 +22,11 @@ export class Store {
   private readonly contactHandler;
   private readonly groupMetadataHandler;
 
-  constructor(sessionId: string) {
-    this.chatHandler = handlers.chatHandler(sessionId);
-    this.messageHandler = handlers.messageHandler(sessionId);
-    this.contactHandler = handlers.contactHandler(sessionId);
-    this.groupMetadataHandler = handlers.groupMetadataHandler(sessionId);
+  constructor(sessionId: string, event: BaileysEventEmitter) {
+    this.chatHandler = handlers.chatHandler(sessionId, event);
+    this.messageHandler = handlers.messageHandler(sessionId, event);
+    this.contactHandler = handlers.contactHandler(sessionId, event);
+    this.groupMetadataHandler = handlers.groupMetadataHandler(sessionId, event);
     this.listen();
   }
 

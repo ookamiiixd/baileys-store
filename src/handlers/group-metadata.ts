@@ -1,11 +1,11 @@
-import { useEventEmitter, useLogger, usePrisma } from '../shared';
+import type { BaileysEventEmitter } from '@adiwajshing/baileys';
+import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
 
-export default function groupMetadataHandler(sessionId: string) {
+export default function groupMetadataHandler(sessionId: string, event: BaileysEventEmitter) {
   const model = usePrisma().groupMetadata;
   const logger = useLogger();
-  const event = useEventEmitter();
   let listening = false;
 
   const update: BaileysEventHandler<'groups.update'> = async (updates) => {

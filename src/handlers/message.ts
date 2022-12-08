@@ -1,17 +1,21 @@
-import type { MessageUserReceipt, proto, WAMessageKey } from '@adiwajshing/baileys';
+import type {
+  BaileysEventEmitter,
+  MessageUserReceipt,
+  proto,
+  WAMessageKey,
+} from '@adiwajshing/baileys';
 import { jidNormalizedUser, toNumber } from '@adiwajshing/baileys';
-import { useEventEmitter, useLogger, usePrisma } from '../shared';
+import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
 
 const getKeyAuthor = (key: WAMessageKey | undefined | null) =>
   (key?.fromMe ? 'me' : key?.participant || key?.remoteJid) || '';
 
-export default function messageHandler(sessionId: string) {
+export default function messageHandler(sessionId: string, event: BaileysEventEmitter) {
   const model = usePrisma().message;
   const chat = usePrisma().chat;
   const logger = useLogger();
-  const event = useEventEmitter();
   let listening = false;
 
   const set: BaileysEventHandler<'messaging-history.set'> = async ({ messages, isLatest }) => {

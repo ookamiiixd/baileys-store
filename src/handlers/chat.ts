@@ -1,11 +1,11 @@
-import { useEventEmitter, useLogger, usePrisma } from '../shared';
+import type { BaileysEventEmitter } from '@adiwajshing/baileys';
+import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
 
-export default function chatHandler(sessionId: string) {
+export default function chatHandler(sessionId: string, event: BaileysEventEmitter) {
   const model = usePrisma().chat;
   const logger = useLogger();
-  const event = useEventEmitter();
   let listening = false;
 
   const set: BaileysEventHandler<'messaging-history.set'> = async ({ chats, isLatest }) => {
