@@ -1,11 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
-import type { BaileysEventEmitter, CommonSocketConfig } from '@adiwajshing/baileys';
+import type { BaileysEventEmitter, SocketConfig } from '@adiwajshing/baileys';
 import { DEFAULT_CONNECTION_CONFIG } from '@adiwajshing/baileys';
 import invariant from 'tiny-invariant';
 
 let prisma: PrismaClient | null = null;
 let eventEmitter: BaileysEventEmitter | null = null;
-let logger: CommonSocketConfig['logger'] | null = null;
+let logger: SocketConfig['logger'] | null = null;
 
 export function setPrisma(prismaClient: PrismaClient) {
   prisma = prismaClient;
@@ -15,7 +15,7 @@ export function setEventEmitter(emitter: BaileysEventEmitter) {
   eventEmitter = emitter;
 }
 
-export function setLogger(pinoLogger?: CommonSocketConfig['logger']) {
+export function setLogger(pinoLogger?: SocketConfig['logger']) {
   logger = pinoLogger || DEFAULT_CONNECTION_CONFIG.logger;
 }
 

@@ -1,4 +1,4 @@
-import type { BaileysEventEmitter, CommonSocketConfig } from '@adiwajshing/baileys';
+import type { BaileysEventEmitter, SocketConfig } from '@adiwajshing/baileys';
 import type { PrismaClient } from '@prisma/client';
 import { setEventEmitter, setLogger, setPrisma } from './shared';
 import * as handlers from './handlers';
@@ -9,7 +9,7 @@ type initStoreOptions = {
   /** Baileys event emitter */
   eventEmitter: BaileysEventEmitter;
   /** Baileys pino logger */
-  logger?: CommonSocketConfig['logger'];
+  logger?: SocketConfig['logger'];
 };
 
 /** Initialize shared instances that will be consumed by the Store instance */

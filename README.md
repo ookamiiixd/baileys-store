@@ -4,7 +4,7 @@ Minimal Baileys data storage for your favorite DBMS built with Prisma. This libr
 
 ## Requirements
 
-- **Prisma** version **4.x.x** or higher
+- **Prisma** version **4.5.x** or higher
 - **Baileys** version **5.x.x** or higher
 
 ## Installation

@@ -1,4 +1,4 @@
-import type { MessageUserReceipt, WAMessageKey } from '@adiwajshing/baileys';
+import type { MessageUserReceipt, proto, WAMessageKey } from '@adiwajshing/baileys';
 import { jidNormalizedUser, toNumber } from '@adiwajshing/baileys';
 import { useEventEmitter, useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
@@ -13,6 +13,26 @@ export default function messageHandler(sessionId: string) {
   const logger = useLogger();
   const event = useEventEmitter();
   let listening = false;
+
+  const set: BaileysEventHandler<'messaging-history.set'> = async ({ messages, isLatest }) => {
+    try {
+      if (isLatest) {
+        await model.deleteMany({ where: { sessionId } });
+      }
+
+      await model.createMany({
+        data: messages.map((message) => ({
+          ...transformPrisma(message),
+          remoteJid: message.key.remoteJid!,
+          id: message.key.id!,
+          sessionId,
+        })),
+      });
+      logger.info({ messages: messages.length }, 'Synced messages');
+    } catch (e) {
+      logger.error(e, 'An error occured during messages set');
+    }
+  };
 
   const upsert: BaileysEventHandler<'messages.upsert'> = async ({ messages, type }) => {
     switch (type) {
@@ -50,35 +70,33 @@ export default function messageHandler(sessionId: string) {
   const update: BaileysEventHandler<'messages.update'> = async (updates) => {
     for (const { update, key } of updates) {
       try {
-        const jid = jidNormalizedUser(key.remoteJid!);
-        const data = transformPrisma(update);
-        const exists =
-          (await model.count({ where: { id: key.id!, remoteJid: jid, sessionId } })) > 0;
+        const prevData = await model.findFirst({
+          where: { id: key.id!, remoteJid: key.remoteJid!, sessionId },
+        });
 
-        if (!exists) {
+        if (!prevData) {
           return logger.info({ update }, 'Got update for non existent message');
         }
 
+        const data = { ...prevData, ...update } as proto.IWebMessageInfo;
         await Promise.all([
           model.delete({
             select: { pkId: true },
             where: {
               sessionId_remoteJid_id: {
                 id: key.id!,
-                remoteJid: jid,
+                remoteJid: key.remoteJid!,
                 sessionId,
               },
             },
           }),
-          model.update({
+          model.create({
             select: { pkId: true },
-            data,
-            where: {
-              sessionId_remoteJid_id: {
-                id: update.key?.id!,
-                remoteJid: jidNormalizedUser(update.key?.remoteJid!),
-                sessionId,
-              },
+            data: {
+              ...transformPrisma(data),
+              id: data.key.id!,
+              remoteJid: data.key.remoteJid!,
+              sessionId,
             },
           }),
         ]);
@@ -151,11 +169,11 @@ export default function messageHandler(sessionId: string) {
         }
 
         const authorID = getKeyAuthor(reaction.key);
-        const reactions = ((message.reactions || []) as any[]).filter(
+        const reactions = ((message.reactions || []) as proto.IReaction[]).filter(
           (r) => getKeyAuthor(r.key) !== authorID
         );
-        if (reaction.text) reactions.push(reaction);
 
+        if (reaction.text) reactions.push(reaction);
         await model.update({
           select: { pkId: true },
           data: transformPrisma({ reactions: reactions }),
@@ -172,6 +190,7 @@ export default function messageHandler(sessionId: string) {
   const listen = () => {
     if (listening) return;
 
+    event.on('messaging-history.set', set);
     event.on('messages.upsert', upsert);
     event.on('messages.update', update);
     event.on('messages.delete', del);
@@ -183,6 +202,7 @@ export default function messageHandler(sessionId: string) {
   const unlisten = () => {
     if (!listening) return;
 
+    event.off('messaging-history.set', set);
     event.off('messages.upsert', upsert);
     event.off('messages.update', update);
     event.off('messages.delete', del);

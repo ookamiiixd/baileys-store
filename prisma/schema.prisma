@@ -59,6 +59,7 @@ model Chat {
   lastMessageRecvTimestamp  Int?
 
   @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@index([sessionId])
 }
 
 model Contact {
@@ -72,6 +73,7 @@ model Contact {
   status       String? @db.VarChar(128)
 
   @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@index([sessionId])
 }
 
 model GroupMetadata {
@@ -94,6 +96,7 @@ model GroupMetadata {
   inviteCode        String?  @db.VarChar(255)
 
   @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@index([sessionId])
 }
 
 model Message {
@@ -146,6 +149,7 @@ model Message {
   verifiedBizName                 String?  @db.VarChar(128)
 
   @@unique([sessionId, remoteJid, id], map: "unique_message_key_per_session_id")
+  @@index([sessionId])
 }
 
 model Session {
@@ -155,4 +159,5 @@ model Session {
   data      String @db.Text
 
   @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@index([sessionId])
 }

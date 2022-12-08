@@ -8,6 +8,32 @@ export default function chatHandler(sessionId: string) {
   const event = useEventEmitter();
   let listening = false;
 
+  const set: BaileysEventHandler<'messaging-history.set'> = async ({ chats, isLatest }) => {
+    try {
+      if (isLatest) {
+        await model.deleteMany({ where: { sessionId } });
+      }
+
+      const existingIds = (
+        await model.findMany({
+          select: { id: true },
+          where: { id: { in: chats.map((c) => c.id) }, sessionId },
+        })
+      ).map((i) => i.id);
+
+      const chatsAdded = (
+        await model.createMany({
+          data: chats
+            .filter((c) => !existingIds.includes(c.id))
+            .map((c) => ({ ...transformPrisma(c), sessionId })),
+        })
+      ).count;
+      logger.info({ chatsAdded }, 'Synced chats');
+    } catch (e) {
+      logger.error(e, 'An error occured during chats set');
+    }
+  };
+
   const upsert: BaileysEventHandler<'chats.upsert'> = async (chats) => {
     const promises: Promise<any>[] = [];
 
@@ -18,7 +44,7 @@ export default function chatHandler(sessionId: string) {
           select: { pkId: true },
           create: { ...data, sessionId },
           update: data,
-          where: { sessionId_id: { id: data.id, sessionId } },
+          where: { sessionId_id: { id: chat.id, sessionId } },
         })
       );
     }
@@ -33,16 +59,16 @@ export default function chatHandler(sessionId: string) {
   const update: BaileysEventHandler<'chats.update'> = async (updates) => {
     for (const update of updates) {
       try {
-        const { id, ...data } = transformPrisma(update);
         const chat = await model.findFirst({
           select: { unreadCount: true },
-          where: { id, sessionId },
+          where: { id: update.id!, sessionId },
         });
 
         if (!chat) {
           return logger.info({ update }, 'Got update for non existent chat');
         }
 
+        const data = transformPrisma(update);
         await model.update({
           select: { pkId: true },
           data: {
@@ -52,7 +78,7 @@ export default function chatHandler(sessionId: string) {
                 ? (chat?.unreadCount ?? 0) + data.unreadCount
                 : undefined,
           },
-          where: { sessionId_id: { id: id!, sessionId } },
+          where: { sessionId_id: { id: update.id!, sessionId } },
         });
       } catch (e) {
         logger.error(e, 'An error occured during chat update');
@@ -73,6 +99,7 @@ export default function chatHandler(sessionId: string) {
   const listen = () => {
     if (listening) return;
 
+    event.on('messaging-history.set', set);
     event.on('chats.upsert', upsert);
     event.on('chats.update', update);
     event.on('chats.delete', del);
@@ -82,6 +109,7 @@ export default function chatHandler(sessionId: string) {
   const unlisten = () => {
     if (!listening) return;
 
+    event.off('messaging-history.set', set);
     event.off('chats.upsert', upsert);
     event.off('chats.update', update);
     event.off('chats.delete', del);

@@ -1,8 +1,8 @@
-import type { AuthenticationCreds, BaileysEventMap } from '@adiwajshing/baileys';
+import type { BaileysEventMap } from '@adiwajshing/baileys';
 import type Long from 'long';
 
-export type BaileysEventHandler<T extends keyof BaileysEventMap<AuthenticationCreds>> = (
-  args: BaileysEventMap<AuthenticationCreds>[T]
+export type BaileysEventHandler<T extends keyof BaileysEventMap> = (
+  args: BaileysEventMap[T]
 ) => void;
 
 type TransformPrisma<T, TransformObject> = T extends Long
