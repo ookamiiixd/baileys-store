@@ -1,13 +1,12 @@
 {
   "name": "@ookamiiixd/baileys-store",
-  "version": "1.0.0",
-  "description": "Baileys store for your favorite DBMS built with Prisma",
+  "version": "1.0.0-beta.0",
+  "description": "Minimal Baileys data storage for your favorite DBMS built with Prisma",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/ookamiiixd/baileys-store.git",
   "author": "Royhan (https://github.com/ookamiiixd)",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
@@ -15,7 +14,7 @@
     "format": "prettier . --write"
   },
   "devDependencies": {
-    "@adiwajshing/baileys": "^4.4.0",
+    "@adiwajshing/baileys": "https://github.com/ookamiiixd/Baileys.git#build",
     "@prisma/client": "^4.7.1",
     "@types/node": "^18.11.10",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
