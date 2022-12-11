@@ -2,24 +2,9 @@
 # yarn lockfile v1
 
 
-"@adiwajshing/baileys@^4.4.0":
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/@adiwajshing/baileys/-/baileys-4.4.0.tgz#6c39c74a29324d22aec67ddbfda890a8e5d85e37"
-  integrity sha512-5gEnkJBgraLL0USzndxto8ofYhWyMFZVkpZ4rD1nPqrjBjGMt+k+YDpllpFpOfA0yxWZb6nPrr04ikQv++dz2Q==
-  dependencies:
-    "@hapi/boom" "^9.1.3"
-    axios "^0.24.0"
-    futoin-hkdf "^1.5.0"
-    libsignal "git+https://github.com/adiwajshing/libsignal-node"
-    music-metadata "^7.12.3"
-    node-cache "^5.1.2"
-    pino "^7.0.0"
-    protobufjs "^6.11.3"
-    ws "^8.0.0"
-
 "@adiwajshing/baileys@https://github.com/ookamiiixd/Baileys.git#build":
   version "5.0.0"
-  resolved "https://github.com/ookamiiixd/Baileys.git#ebd001545203f1d3fd008f7406c44888acc19d64"
+  resolved "https://github.com/ookamiiixd/Baileys.git#edd03183e389a2ec9fc28323ebdf95fd0daf9f85"
   dependencies:
     "@hapi/boom" "^9.1.3"
     axios "^0.24.0"
@@ -735,7 +720,7 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
 
-futoin-hkdf@^1.5.0, futoin-hkdf@^1.5.1:
+futoin-hkdf@^1.5.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/futoin-hkdf/-/futoin-hkdf-1.5.1.tgz#141f00427bc9950b38a42aa786b99c318b9b688d"
   integrity sha512-g5d0Qp7ks55hYmYmfqn4Nz18XH49lcCR+vvIvHT92xXnsJaGZmY1EtWQWilJ6BQp57heCIXM/rRo+AFep8hGgg==
