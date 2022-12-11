@@ -1,4 +1,5 @@
 import type { BaileysEventEmitter } from '@adiwajshing/baileys';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
@@ -81,6 +82,8 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
           where: { sessionId_id: { id: update.id!, sessionId } },
         });
       } catch (e) {
+        if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025')
+          return logger.info({ update }, 'Got update for non existent chat');
         logger.error(e, 'An error occured during chat update');
       }
     }

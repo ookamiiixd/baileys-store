@@ -1,4 +1,5 @@
 import type { BaileysEventEmitter } from '@adiwajshing/baileys';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
@@ -17,6 +18,8 @@ export default function groupMetadataHandler(sessionId: string, event: BaileysEv
           where: { sessionId_id: { id: update.id!, sessionId } },
         });
       } catch (e) {
+        if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025')
+          return logger.info({ update }, 'Got metadata update for non existent group');
         logger.error(e, 'An error occured during group metadata update');
       }
     }
