@@ -40,12 +40,11 @@ const prisma = new PrismaClient();
 // You only need to run this once
 initStore({
   prisma, // Prisma client instance
-  logger, // Pino logger
-  eventEmitter: socket.ev, // Baileys event emitter
+  logger, // Pino logger (Optional)
 });
 
 // Create a store and start listening to the events
-const store = new Store('unique-session-id-here');
+const store = new Store('unique-session-id-here', socket.ev);
 
 // That's it, you can now query from the prisma client without having to worry about handling the events
 const messages = prisma.message.findMany();

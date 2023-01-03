@@ -18,6 +18,24 @@ type TransformPrisma<T, TransformObject> = T extends Long
   : T;
 
 /** Transform unsupported types into supported Prisma types */
-export type MakePrismable<T extends Record<string, any>, TransformObject extends boolean = true> = {
+export type MakeTransformedPrisma<
+  T extends Record<string, any>,
+  TransformObject extends boolean = true
+> = {
   [K in keyof T]: TransformPrisma<T[K], TransformObject>;
+};
+
+type SerializePrisma<T> = T extends Buffer
+  ? {
+      type: 'Buffer';
+      data: number[];
+    }
+  : T extends bigint
+  ? string
+  : T extends null
+  ? never
+  : T;
+
+export type MakeSerializedPrisma<T extends Record<string, any>> = {
+  [K in keyof T]: SerializePrisma<T[K]>;
 };
