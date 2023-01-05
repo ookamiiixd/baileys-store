@@ -9,6 +9,28 @@ export default function groupMetadataHandler(sessionId: string, event: BaileysEv
   const logger = useLogger();
   let listening = false;
 
+  const upsert: BaileysEventHandler<'groups.upsert'> = async (groups) => {
+    const promises: Promise<any>[] = [];
+
+    for (const group of groups) {
+      const data = transformPrisma(group);
+      promises.push(
+        model.upsert({
+          select: { pkId: true },
+          create: { ...data, sessionId },
+          update: data,
+          where: { sessionId_id: { id: group.id, sessionId } },
+        })
+      );
+    }
+
+    try {
+      await Promise.all(promises);
+    } catch (e) {
+      logger.error(e, 'An error occured during groups upsert');
+    }
+  };
+
   const update: BaileysEventHandler<'groups.update'> = async (updates) => {
     for (const update of updates) {
       try {
@@ -75,6 +97,7 @@ export default function groupMetadataHandler(sessionId: string, event: BaileysEv
   const listen = () => {
     if (listening) return;
 
+    event.on('groups.upsert', upsert);
     event.on('groups.update', update);
     event.on('group-participants.update', updateParticipant);
     listening = true;
@@ -83,6 +106,7 @@ export default function groupMetadataHandler(sessionId: string, event: BaileysEv
   const unlisten = () => {
     if (!listening) return;
 
+    event.off('groups.upsert', upsert);
     event.off('groups.update', update);
     event.off('group-participants.update', updateParticipant);
     listening = false;

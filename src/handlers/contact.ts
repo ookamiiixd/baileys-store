@@ -44,6 +44,28 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
     }
   };
 
+  const upsert: BaileysEventHandler<'contacts.upsert'> = async (contacts) => {
+    const promises: Promise<any>[] = [];
+
+    for (const contact of contacts) {
+      const data = transformPrisma(contact);
+      promises.push(
+        model.upsert({
+          select: { pkId: true },
+          create: { ...data, sessionId },
+          update: data,
+          where: { sessionId_id: { id: contact.id, sessionId } },
+        })
+      );
+    }
+
+    try {
+      await Promise.all(promises);
+    } catch (e) {
+      logger.error(e, 'An error occured during contacts upsert');
+    }
+  };
+
   const update: BaileysEventHandler<'contacts.update'> = async (updates) => {
     for (const update of updates) {
       try {
@@ -64,6 +86,7 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
     if (listening) return;
 
     event.on('messaging-history.set', set);
+    event.on('contacts.upsert', upsert);
     event.on('contacts.update', update);
     listening = true;
   };
@@ -72,6 +95,7 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
     if (!listening) return;
 
     event.off('messaging-history.set', set);
+    event.off('contacts.upsert', upsert);
     event.off('contacts.update', update);
     listening = false;
   };

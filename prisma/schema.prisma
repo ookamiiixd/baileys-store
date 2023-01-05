@@ -151,6 +151,15 @@ model Message {
   @@index([sessionId])
 }
 
+model Blocklist {
+  pkId      Int    @id @default(autoincrement())
+  sessionId String @db.VarChar(128)
+  id        String @db.VarChar(128)
+
+  @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@index([sessionId])
+}
+
 model Session {
   pkId      Int    @id @default(autoincrement())
   sessionId String @db.VarChar(128)
