@@ -71,30 +71,7 @@ model Contact {
   imgUrl       String? @db.VarChar(255)
   status       String? @db.VarChar(128)
 
-  @@unique([sessionId, id], map: "unique_id_per_session_id")
-  @@index([sessionId])
-}
-
-model GroupMetadata {
-  pkId              Int      @id @default(autoincrement())
-  sessionId         String   @db.VarChar(128)
-  id                String   @db.VarChar(128)
-  owner             String?  @db.VarChar(128)
-  subject           String   @db.VarChar(128)
-  subjectOwner      String?  @db.VarChar(128)
-  subjectTime       Int?
-  creation          Int?
-  desc              String?  @db.VarChar(255)
-  descOwner         String?  @db.VarChar(128)
-  descId            String?  @db.VarChar(128)
-  restrict          Boolean?
-  announce          Boolean?
-  size              Int?
-  participants      Json
-  ephemeralDuration Int?
-  inviteCode        String?  @db.VarChar(255)
-
-  @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@unique([sessionId, id], map: "unique_id_per_session_id_contact")
   @@index([sessionId])
 }
 
