@@ -5,53 +5,52 @@ import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
 
 export default function chatHandler(sessionId: string, event: BaileysEventEmitter) {
-  const model = usePrisma().chat;
+  const prisma = usePrisma();
   const logger = useLogger();
   let listening = false;
 
   const set: BaileysEventHandler<'messaging-history.set'> = async ({ chats, isLatest }) => {
     try {
-      if (isLatest) {
-        await model.deleteMany({ where: { sessionId } });
-      }
+      await prisma.$transaction(async (tx) => {
+        if (isLatest) {
+          await tx.chat.deleteMany({ where: { sessionId } });
+        }
 
-      const existingIds = (
-        await model.findMany({
-          select: { id: true },
-          where: { id: { in: chats.map((c) => c.id) }, sessionId },
-        })
-      ).map((i) => i.id);
+        const existingIds = (
+          await tx.chat.findMany({
+            select: { id: true },
+            where: { id: { in: chats.map((c) => c.id) }, sessionId },
+          })
+        ).map((i) => i.id);
+        const chatsAdded = (
+          await tx.chat.createMany({
+            data: chats
+              .filter((c) => !existingIds.includes(c.id))
+              .map((c) => ({ ...transformPrisma(c), sessionId })),
+          })
+        ).count;
 
-      const chatsAdded = (
-        await model.createMany({
-          data: chats
-            .filter((c) => !existingIds.includes(c.id))
-            .map((c) => ({ ...transformPrisma(c), sessionId })),
-        })
-      ).count;
-      logger.info({ chatsAdded }, 'Synced chats');
+        logger.info({ chatsAdded }, 'Synced chats');
+      });
     } catch (e) {
       logger.error(e, 'An error occured during chats set');
     }
   };
 
   const upsert: BaileysEventHandler<'chats.upsert'> = async (chats) => {
-    const promises: Promise<any>[] = [];
-
-    for (const chat of chats) {
-      const data = transformPrisma(chat);
-      promises.push(
-        model.upsert({
-          select: { pkId: true },
-          create: { ...data, sessionId },
-          update: data,
-          where: { sessionId_id: { id: chat.id, sessionId } },
-        })
-      );
-    }
-
     try {
-      await Promise.all(promises);
+      await prisma.$transaction(
+        chats
+          .map((c) => transformPrisma(c))
+          .map((data) =>
+            prisma.chat.upsert({
+              select: { pkId: true },
+              create: { ...data, sessionId },
+              update: data,
+              where: { sessionId_id: { id: data.id, sessionId } },
+            })
+          )
+      );
     } catch (e) {
       logger.error(e, 'An error occured during chats upsert');
     }
@@ -60,30 +59,33 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
   const update: BaileysEventHandler<'chats.update'> = async (updates) => {
     for (const update of updates) {
       try {
-        const chat = await model.findFirst({
-          select: { unreadCount: true },
-          where: { id: update.id!, sessionId },
-        });
+        await prisma.$transaction(async (tx) => {
+          const chat = await tx.chat.findFirst({
+            select: { unreadCount: true },
+            where: { id: update.id!, sessionId },
+          });
 
-        if (!chat) {
-          return logger.info({ update }, 'Got update for non existent chat');
-        }
+          if (!chat) {
+            return logger.info({ update }, 'Got update for non existent chat');
+          }
 
-        const data = transformPrisma(update);
-        await model.update({
-          select: { pkId: true },
-          data: {
-            ...data,
-            unreadCount:
-              data.unreadCount && data.unreadCount > 0
-                ? (chat?.unreadCount ?? 0) + data.unreadCount
-                : undefined,
-          },
-          where: { sessionId_id: { id: update.id!, sessionId } },
+          const data = transformPrisma(update);
+          await tx.chat.update({
+            select: { pkId: true },
+            data: {
+              ...data,
+              unreadCount:
+                data.unreadCount && data.unreadCount > 0
+                  ? { set: (chat?.unreadCount ?? 0) + data.unreadCount }
+                  : undefined,
+            },
+            where: { sessionId_id: { id: update.id!, sessionId } },
+          });
         });
       } catch (e) {
-        if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025')
+        if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
           return logger.info({ update }, 'Got update for non existent chat');
+        }
         logger.error(e, 'An error occured during chat update');
       }
     }
@@ -91,7 +93,7 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
 
   const del: BaileysEventHandler<'chats.delete'> = async (ids) => {
     try {
-      await model.deleteMany({
+      await prisma.chat.deleteMany({
         where: { id: { in: ids } },
       });
     } catch (e) {

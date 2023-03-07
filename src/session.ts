@@ -1,6 +1,7 @@
 import type { AuthenticationCreds, SignalDataTypeMap } from '@adiwajshing/baileys';
 import { proto } from '@adiwajshing/baileys';
 import { BufferJSON, initAuthCreds } from '@adiwajshing/baileys';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { useLogger, usePrisma } from './shared';
 
 const fixId = (id: string) => id.replace(/\//g, '__').replace(/:/g, '-');
@@ -32,6 +33,9 @@ export async function useSession(sessionId: string) {
       });
       return JSON.parse(data, BufferJSON.reviver);
     } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
+        return logger.info({ id }, 'Trying to read non existent session data');
+      }
       logger.error(e, 'An error occured during session read');
       return null;
     }
@@ -62,11 +66,9 @@ export async function useSession(sessionId: string) {
               if (type === 'app-state-sync-key' && value) {
                 value = proto.Message.AppStateSyncKeyData.fromObject(value);
               }
-
               data[id] = value;
             })
           );
-
           return data;
         },
         set: async (data: any) => {
@@ -79,13 +81,10 @@ export async function useSession(sessionId: string) {
               tasks.push(value ? write(value, sId) : del(sId));
             }
           }
-
           await Promise.all(tasks);
         },
       },
     },
-    saveCreds: () => {
-      return write(creds, 'creds');
-    },
+    saveCreds: () => write(creds, 'creds'),
   };
 }
