@@ -9,10 +9,10 @@ Minimal Baileys data storage for your favorite DBMS built with Prisma. This libr
 
 ## Supported Databases
 
-- MySQL and PostgreSQL database support the default schema out of the box
-- For CockcroachDB, you need to do this small change in the schema file
+- MySQL and PostgreSQL database should support the default schema out of the box
+- For CockroachDB, you need to do this small change in the schema file
 
-```diff
+```diff prisma
 model Session {
   pkId      BigInt    @id @default(autoincrement())
   sessionId String
@@ -25,7 +25,7 @@ model Session {
 }
 ```
 
-- For MongoDB, you need to follow [this convention](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference?query=getdmff&page=1#mongodb-10) and update the `pkId` field. Then remove the native database type attribute `@db.Text` for the `data` field in the `Session` model like in the CockroachDB guide
+- For MongoDB, you need to follow [this convention](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference?query=getdmff&page=1#mongodb-10) and update the `pkId` field. Then follow the previous CockroachDB guide
 - SQLite and SQL Server database are not supported since they didn't support Prisma's `JSON` scalar type
 
 ## Installation
