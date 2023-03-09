@@ -34,9 +34,10 @@ export async function useSession(sessionId: string) {
       return JSON.parse(data, BufferJSON.reviver);
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
-        return logger.info({ id }, 'Trying to read non existent session data');
+        logger.info({ id }, 'Trying to read non existent session data');
+      } else {
+        logger.error(e, 'An error occured during session read');
       }
-      logger.error(e, 'An error occured during session read');
       return null;
     }
   };
