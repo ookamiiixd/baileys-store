@@ -1,4 +1,5 @@
 import type { BaileysEventEmitter } from '@adiwajshing/baileys';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
@@ -11,9 +12,7 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
   const set: BaileysEventHandler<'messaging-history.set'> = async ({ chats, isLatest }) => {
     try {
       await prisma.$transaction(async (tx) => {
-        if (isLatest) {
-          await tx.chat.deleteMany({ where: { sessionId } });
-        }
+        if (isLatest) await tx.chat.deleteMany({ where: { sessionId } });
 
         const existingIds = (
           await tx.chat.findMany({
@@ -38,7 +37,7 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
 
   const upsert: BaileysEventHandler<'chats.upsert'> = async (chats) => {
     try {
-      await prisma.$transaction(
+      await Promise.any(
         chats
           .map((c) => transformPrisma(c))
           .map((data) =>
@@ -58,32 +57,22 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
   const update: BaileysEventHandler<'chats.update'> = async (updates) => {
     for (const update of updates) {
       try {
-        await prisma.$transaction(async (tx) => {
-          const chat = await tx.chat.findFirst({
-            select: { unreadCount: true },
-            where: { id: update.id!, sessionId },
-          });
-
-          if (!chat) {
-            return logger.info({ update }, 'Got update for non existent chat');
-          }
-
-          const data = transformPrisma(update);
-          await tx.chat.update({
-            select: { pkId: true },
-            data: {
-              ...data,
-              unreadCount: {
-                set:
-                  data.unreadCount && data.unreadCount > 0
-                    ? (chat?.unreadCount ?? 0) + data.unreadCount
-                    : data.unreadCount,
-              },
-            },
-            where: { sessionId_id: { id: update.id!, sessionId } },
-          });
+        const data = transformPrisma(update);
+        await prisma.chat.update({
+          select: { pkId: true },
+          data: {
+            ...data,
+            unreadCount:
+              data.unreadCount && data.unreadCount > 0
+                ? { increment: data.unreadCount }
+                : { set: data.unreadCount },
+          },
+          where: { sessionId_id: { id: update.id!, sessionId } },
         });
       } catch (e) {
+        if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
+          return logger.info({ update }, 'Got update for non existent chat');
+        }
         logger.error(e, 'An error occured during chat update');
       }
     }

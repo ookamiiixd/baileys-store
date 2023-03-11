@@ -20,9 +20,7 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
   const set: BaileysEventHandler<'messaging-history.set'> = async ({ messages, isLatest }) => {
     try {
       await prisma.$transaction(async (tx) => {
-        if (isLatest) {
-          await tx.message.deleteMany({ where: { sessionId } });
-        }
+        if (isLatest) await tx.message.deleteMany({ where: { sessionId } });
 
         await tx.message.createMany({
           data: messages.map((message) => ({

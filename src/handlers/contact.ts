@@ -30,7 +30,7 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
           })
         );
 
-      await prisma.$transaction([
+      await Promise.any([
         ...upsertPromises,
         prisma.contact.deleteMany({ where: { id: { in: deletedOldContactIds }, sessionId } }),
       ]);
@@ -45,7 +45,7 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
 
   const upsert: BaileysEventHandler<'contacts.upsert'> = async (contacts) => {
     try {
-      await prisma.$transaction(
+      await Promise.any(
         contacts
           .map((c) => transformPrisma(c))
           .map((data) =>
