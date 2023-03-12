@@ -62,10 +62,11 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
           select: { pkId: true },
           data: {
             ...data,
-            unreadCount:
-              data.unreadCount && data.unreadCount > 0
+            unreadCount: data.unreadCount
+              ? data.unreadCount > 0
                 ? { increment: data.unreadCount }
-                : { set: data.unreadCount },
+                : { set: data.unreadCount }
+              : undefined,
           },
           where: { sessionId_id: { id: update.id!, sessionId } },
         });
