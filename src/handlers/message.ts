@@ -8,6 +8,7 @@ import { jidNormalizedUser, toNumber } from '@adiwajshing/baileys';
 import { useLogger, usePrisma } from '../shared';
 import type { BaileysEventHandler } from '../types';
 import { transformPrisma } from '../utils';
+import 'dotenv/config';
 
 const getKeyAuthor = (key: WAMessageKey | undefined | null) =>
   (key?.fromMe ? 'me' : key?.participant || key?.remoteJid) || '';
@@ -82,16 +83,18 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
           }
 
           const data = { ...prevData, ...update } as proto.IWebMessageInfo;
-          await tx.message.delete({
-            select: { pkId: true },
-            where: {
-              sessionId_remoteJid_id: {
-                id: key.id!,
-                remoteJid: key.remoteJid!,
-                sessionId,
+          if (process.env.DELETEREADMESSAGE == 'true') {
+            await tx.message.delete({
+              select: { pkId: true },
+              where: {
+                sessionId_remoteJid_id: {
+                  id: key.id!,
+                  remoteJid: key.remoteJid!,
+                  sessionId,
+                },
               },
-            },
-          });
+            });
+          }
           await tx.message.create({
             select: { pkId: true },
             data: {
