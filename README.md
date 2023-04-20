@@ -1,3 +1,7 @@
+> 🚨 **NOTICE**: `@adiwajshing/baileys` which is this project relied on, has been discontinued. Thus, this project will be archived and stopped receiving updates anymore. Thanks everyone who's been part of this❤️
+
+---
+
 # Baileys Store
 
 Minimal Baileys data storage for your favorite DBMS built with Prisma. This library is a simple handler for Baileys event emitter that will listen and update your data in the database
